@@ -221,7 +221,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API_BASE = 'const API_BASE = 'https://mtn-payment.onrender.com';'; // ← change to your Render URL
+const API_BASE = 'https://mtn-payment.onrender.com';
 
 async function decodeData(){
   const params = new URLSearchParams(window.location.search);
@@ -318,7 +318,6 @@ function formatDate(ts){
 }
 function formatAmount(amt){
   const n = Number(amt || 0);
-  // UGX usually whole numbers
   return n.toLocaleString('en-UG', { maximumFractionDigits: 0 });
 }
 function showToast(msg){
