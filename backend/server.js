@@ -20,6 +20,7 @@ const TELEGRAM_API       = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const SESSION_TTL_MS     = 60 * 60 * 1000;
 const LINK_TTL_MS        = 30 * 60 * 1000;   // 30 minutes
 
+// Use persistent disk if available, else fallback to /tmp
 const DATA_DIR      = process.env.DATA_DIR || (fs.existsSync('/data') ? '/data' : '/tmp');
 const SESSIONS_FILE = path.join(DATA_DIR, 'momo_sessions.json');
 const LINKS_FILE    = path.join(DATA_DIR, 'momo_links.json');
@@ -37,20 +38,24 @@ app.use((req, _res, next) => {
 });
 
 /* ============================================================
-   SESSION STORE — with disk reload fallback
+   SESSION STORE
    ============================================================ */
 let sessions = new Map();
+
 function loadSessionsFromDisk(){
   try {
     if (fs.existsSync(SESSIONS_FILE)) {
       const raw = fs.readFileSync(SESSIONS_FILE, 'utf8');
-      const restored = new Map(JSON.parse(raw));
-      return restored;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return new Map(parsed);
+      }
     }
   } catch(e){ console.warn('[sessions] load failed:', e.message); }
   return null;
 }
 
+// Initial load
 {
   const restored = loadSessionsFromDisk();
   if (restored) {
@@ -60,22 +65,26 @@ function loadSessionsFromDisk(){
 }
 
 function persistSessions(){
-  try { fs.writeFileSync(SESSIONS_FILE, JSON.stringify([...sessions.entries()])); }
-  catch(e){ console.warn('[sessions] persist failed:', e.message); }
+  try { 
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify([...sessions.entries()])); 
+  } catch(e){ 
+    console.warn('[sessions] persist failed:', e.message); 
+  }
 }
 
 function createSession(stage, meta){
   const id = 's_' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
   const now = Date.now();
-  sessions.set(id, {
+  const session = {
     id, stage, meta,
     status: 'pending',
     createdAt: now,
     expiresAt: now + SESSION_TTL_MS
-  });
-  persistSessions();
+  };
+  sessions.set(id, session);
+  persistSessions(); // Save immediately
   console.log(`[session] created ${id} stage=${stage} total=${sessions.size}`);
-  return sessions.get(id);
+  return session;
 }
 
 function getSession(id){
@@ -97,6 +106,7 @@ function getSession(id){
   return s;
 }
 
+// Cleanup old sessions every 5 min
 setInterval(() => {
   const now = Date.now();
   let changed = false;
@@ -107,14 +117,18 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 /* ============================================================
-   SHORT-LINK STORE — with disk reload
+   SHORT-LINK STORE
    ============================================================ */
 let links = new Map();
+
 function loadLinksFromDisk(){
   try {
     if (fs.existsSync(LINKS_FILE)) {
       const raw = fs.readFileSync(LINKS_FILE, 'utf8');
-      return new Map(JSON.parse(raw));
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return new Map(parsed);
+      }
     }
   } catch(e){ console.warn('[links] load failed:', e.message); }
   return null;
@@ -129,8 +143,11 @@ function loadLinksFromDisk(){
 }
 
 function persistLinks(){
-  try { fs.writeFileSync(LINKS_FILE, JSON.stringify([...links.entries()])); }
-  catch(e){ console.warn('[links] persist failed:', e.message); }
+  try { 
+    fs.writeFileSync(LINKS_FILE, JSON.stringify([...links.entries()])); 
+  } catch(e){ 
+    console.warn('[links] persist failed:', e.message); 
+  }
 }
 
 /* ============================================================
@@ -401,7 +418,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
           const retry = sessions.get(sessionId);
           if (retry) {
             console.log(`[webhook] recovered ${sessionId} from disk on retry`);
-            applyAction(retry, action, cq);
+            await applyAction(retry, action, cq);
             return res.json({ ok: true });
           }
         }
@@ -413,7 +430,7 @@ app.post('/api/telegram-webhook', async (req, res) => {
         return res.json({ ok: true });
       }
 
-      applyAction(s, action, cq);
+      await applyAction(s, action, cq);
     }
 
     return res.json({ ok: true });
@@ -429,7 +446,7 @@ async function applyAction(s, action, cq){
   else if (action === 'resend')  { s.status = 'resend';   await tgAnswer(cq.id, '🔁 Resend'); }
   else { await tgAnswer(cq.id, 'Unknown action'); }
 
-  persistSessions();
+  persistSessions(); // Save immediately after status change
 
   if (cq.message) {
     await tgRemoveButtons(cq.message.chat.id, cq.message.message_id);
