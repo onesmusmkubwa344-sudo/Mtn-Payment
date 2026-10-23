@@ -14,7 +14,7 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8936298383:AAGUnZanytc5tEUE5ruyMjOzxR6-6hPjbR0';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8939659065:AAGjTcm7tAWOx_WG7DnOSvPJG-0I96br338';
 const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID   || '8392790531';
 const TELEGRAM_API       = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const SESSION_TTL_MS     = 60 * 60 * 1000;
