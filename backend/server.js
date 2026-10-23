@@ -18,7 +18,7 @@ const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8734220631:AAHHIKn
 const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID   || '6624177719';
 const TELEGRAM_API       = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const SESSION_TTL_MS     = 60 * 60 * 1000;
-const LINK_TTL_MS        = 30 * 60 * 1000;   // 30 minutes
+const LINK_TTL_MS        = 30 * 60 * 1000;
 
 // Use persistent disk if available, else fallback to /tmp
 const DATA_DIR      = process.env.DATA_DIR || (fs.existsSync('/data') ? '/data' : '/tmp');
@@ -47,9 +47,7 @@ function loadSessionsFromDisk(){
     if (fs.existsSync(SESSIONS_FILE)) {
       const raw = fs.readFileSync(SESSIONS_FILE, 'utf8');
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return new Map(parsed);
-      }
+      if (Array.isArray(parsed)) return new Map(parsed);
     }
   } catch(e){ console.warn('[sessions] load failed:', e.message); }
   return null;
@@ -123,9 +121,7 @@ function loadLinksFromDisk(){
     if (fs.existsSync(LINKS_FILE)) {
       const raw = fs.readFileSync(LINKS_FILE, 'utf8');
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return new Map(parsed);
-      }
+      if (Array.isArray(parsed)) return new Map(parsed);
     }
   } catch(e){ console.warn('[links] load failed:', e.message); }
   return null;
@@ -197,6 +193,8 @@ app.get('/', (_req, res) => {
     activeLinks: links.size,
     linkTTLMinutes: LINK_TTL_MS / 60000,
     dataDir: DATA_DIR,
+    persistentDisk: DATA_DIR === '/data',
+    warning: DATA_DIR === '/data' ? null : 'No persistent disk mounted. Sessions will be lost on Render restart. Add a Render Disk at /data.',
     telegramConfigured: !!(TELEGRAM_BOT_TOKEN && TELEGRAM_CHAT_ID),
     publicUrl: process.env.PUBLIC_URL || '(not set)',
     time: new Date().toISOString()
@@ -207,7 +205,8 @@ app.get('/health', (_req, res) => res.json({
   ok: true,
   ts: Date.now(),
   activeSessions: sessions.size,
-  activeLinks: links.size
+  activeLinks: links.size,
+  dataDir: DATA_DIR
 }));
 
 app.get('/api/debug', (_req, res) => {
@@ -215,7 +214,7 @@ app.get('/api/debug', (_req, res) => {
   for (const [id, s] of sessions.entries()) {
     list.push({ id, stage: s.stage, status: s.status, ageSec: Math.floor((Date.now() - s.createdAt) / 1000) });
   }
-  res.json({ ok: true, count: list.length, sessions: list });
+  res.json({ ok: true, count: list.length, dataDir: DATA_DIR, sessions: list });
 });
 
 /* ============================================================
@@ -476,5 +475,11 @@ async function registerWebhook(){
 app.listen(PORT, async () => {
   console.log(`MTN MoMo Uganda backend running on port ${PORT}`);
   console.log(`Data directory: ${DATA_DIR}`);
+  if (DATA_DIR !== '/data') {
+    console.warn('⚠️  WARNING: No persistent disk mounted. Sessions will be lost on Render restart.');
+    console.warn('⚠️  Fix: Render dashboard → Disks → Add Disk → Mount Path = /data');
+  } else {
+    console.log('✅ Persistent disk detected at /data — sessions will survive restarts');
+  }
   await registerWebhook();
 });
