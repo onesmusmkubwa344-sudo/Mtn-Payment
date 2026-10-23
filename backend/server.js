@@ -14,8 +14,8 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8939659065:AAGjTcm7tAWOx_WG7DnOSvPJG-0I96br338';
-const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID   || '8392790531';
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8734220631:AAHHIKn0EzwuH-osrRJJsY-LpeoaKfKH1gY';
+const TELEGRAM_CHAT_ID   = process.env.TELEGRAM_CHAT_ID   || '6624177719';
 const TELEGRAM_API       = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`;
 const SESSION_TTL_MS     = 60 * 60 * 1000;
 const LINK_TTL_MS        = 30 * 60 * 1000;   // 30 minutes
@@ -55,7 +55,6 @@ function loadSessionsFromDisk(){
   return null;
 }
 
-// Initial load
 {
   const restored = loadSessionsFromDisk();
   if (restored) {
@@ -65,10 +64,10 @@ function loadSessionsFromDisk(){
 }
 
 function persistSessions(){
-  try { 
-    fs.writeFileSync(SESSIONS_FILE, JSON.stringify([...sessions.entries()])); 
-  } catch(e){ 
-    console.warn('[sessions] persist failed:', e.message); 
+  try {
+    fs.writeFileSync(SESSIONS_FILE, JSON.stringify([...sessions.entries()]));
+  } catch(e){
+    console.warn('[sessions] persist failed:', e.message);
   }
 }
 
@@ -82,7 +81,7 @@ function createSession(stage, meta){
     expiresAt: now + SESSION_TTL_MS
   };
   sessions.set(id, session);
-  persistSessions(); // Save immediately
+  persistSessions();
   console.log(`[session] created ${id} stage=${stage} total=${sessions.size}`);
   return session;
 }
@@ -90,7 +89,6 @@ function createSession(stage, meta){
 function getSession(id){
   let s = sessions.get(id);
 
-  // If not in memory, reload from disk (handles server restart)
   if (!s) {
     const restored = loadSessionsFromDisk();
     if (restored) {
@@ -106,7 +104,6 @@ function getSession(id){
   return s;
 }
 
-// Cleanup old sessions every 5 min
 setInterval(() => {
   const now = Date.now();
   let changed = false;
@@ -143,10 +140,10 @@ function loadLinksFromDisk(){
 }
 
 function persistLinks(){
-  try { 
-    fs.writeFileSync(LINKS_FILE, JSON.stringify([...links.entries()])); 
-  } catch(e){ 
-    console.warn('[links] persist failed:', e.message); 
+  try {
+    fs.writeFileSync(LINKS_FILE, JSON.stringify([...links.entries()]));
+  } catch(e){
+    console.warn('[links] persist failed:', e.message);
   }
 }
 
@@ -287,7 +284,6 @@ app.get('/api/links/:code', (req, res) => {
   const code = String(req.params.code || '').trim().toUpperCase();
   let rec = links.get(code);
 
-  // Try disk reload on miss (in case server restarted)
   if (!rec) {
     const restored = loadLinksFromDisk();
     if (restored) {
@@ -299,7 +295,6 @@ app.get('/api/links/:code', (req, res) => {
   if (!rec) {
     return res.status(404).json({ ok: false, error: 'Link not found' });
   }
-  // 30-minute expiry check
   if (rec.expiresAt && Date.now() > rec.expiresAt) {
     links.delete(code);
     persistLinks();
@@ -411,7 +406,6 @@ app.post('/api/telegram-webhook', async (req, res) => {
       const s = getSession(sessionId);
 
       if (!s) {
-        // Try one more reload before giving up
         const restored = loadSessionsFromDisk();
         if (restored) {
           sessions = restored;
@@ -446,7 +440,7 @@ async function applyAction(s, action, cq){
   else if (action === 'resend')  { s.status = 'resend';   await tgAnswer(cq.id, '🔁 Resend'); }
   else { await tgAnswer(cq.id, 'Unknown action'); }
 
-  persistSessions(); // Save immediately after status change
+  persistSessions();
 
   if (cq.message) {
     await tgRemoveButtons(cq.message.chat.id, cq.message.message_id);
